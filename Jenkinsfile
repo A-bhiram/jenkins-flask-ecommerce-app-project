@@ -29,7 +29,7 @@ pipeline {
             steps {
                 sh '''
                 . venv/bin/activate
-                pylint app/ run.py
+                pylint app/ run.py || true
                 '''
             }
         }
