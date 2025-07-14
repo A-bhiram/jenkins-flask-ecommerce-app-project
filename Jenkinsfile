@@ -80,19 +80,31 @@ pipeline {
 
     post {
         success {
-            script {
-                def webhookUrl = credentials('slack-webhook')
-                def message = "✅ Build SUCCESS: Job ${env.JOB_NAME} [#${env.BUILD_NUMBER}]"
-                sh "curl -X POST -H 'Content-type: application/json' --data '{\"text\": \"${message}\"}' ${webhookUrl}"
+            withCredentials([string(credentialsId: 'slack-webhook', variable: 'SLACK_URL')]) {
+                script {
+                    def payload = [
+                        text: "✅ Build SUCCESS: Job ${env.JOB_NAME} [#${env.BUILD_NUMBER}]"
+                    ]
+                    httpRequest httpMode: 'POST',
+                                contentType: 'APPLICATION_JSON',
+                                requestBody: groovy.json.JsonOutput.toJson(payload),
+                                url: SLACK_URL
+                }
             }
         }
+
         failure {
-            script {
-                def webhookUrl = credentials('slack-webhook')
-                def message = "❌ Build FAILED: Job ${env.JOB_NAME} [#${env.BUILD_NUMBER}]"
-                sh "curl -X POST -H 'Content-type: application/json' --data '{\"text\": \"${message}\"}' ${webhookUrl}"
+            withCredentials([string(credentialsId: 'slack-webhook', variable: 'SLACK_URL')]) {
+                script {
+                    def payload = [
+                        text: "❌ Build FAILED: Job ${env.JOB_NAME} [#${env.BUILD_NUMBER}]"
+                    ]
+                    httpRequest httpMode: 'POST',
+                                contentType: 'APPLICATION_JSON',
+                                requestBody: groovy.json.JsonOutput.toJson(payload),
+                                url: SLACK_URL
+                }
             }
         }
     }
 }
-
