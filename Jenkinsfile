@@ -61,42 +61,44 @@ pipeline {
                 }
             }
         }
-       stage('Deploy to EC2') {
-  steps {
-    sshagent(['ec2-ssh-key']) {
-      sh '''
-ssh -o StrictHostKeyChecking=no ubuntu@51.20.252.149 << EOF
-  docker pull $IMAGE_NAME
-  docker stop flask-app || true
-  docker rm flask-app || true
-  docker run -d -p 5000:5000 --name flask-app $IMAGE_NAME
+
+        stage('Deploy to EC2') {
+            steps {
+                sshagent(['ec2-ssh-key']) {
+                    sh '''
+                        ssh -o StrictHostKeyChecking=no ubuntu@51.20.252.149 << EOF
+                          docker pull $IMAGE_NAME
+                          docker stop flask-app || true
+                          docker rm flask-app || true
+                          docker run -d -p 5000:5000 --name flask-app $IMAGE_NAME
 EOF
-      '''
-    }
-  }
-}
- 
-    }
-}
-post {
-    success {
-        script {
-            def webhookUrl = credentials('slack-webhook')
-            sh """
-            curl -X POST -H 'Content-type: application/json' \
-                 --data '{"text":"✅ Build SUCCESS: Job ${env.JOB_NAME} [#${env.BUILD_NUMBER}]"}' \
-                 ${webhookUrl}
-            """
+                    '''
+                }
+            }
         }
     }
-    failure {
-        script {
-            def webhookUrl = credentials('slack-webhook')
-            sh """
-            curl -X POST -H 'Content-type: application/json' \
-                 --data '{"text":"❌ Build FAILED: Job ${env.JOB_NAME} [#${env.BUILD_NUMBER}]"}' \
-                 ${webhookUrl}
-            """
+
+    post {
+        success {
+            script {
+                def webhookUrl = credentials('slack-webhook')
+                sh """
+                  curl -X POST -H 'Content-type: application/json' \
+                  --data '{"text":"✅ Build SUCCESS: Job ${env.JOB_NAME} [#${env.BUILD_NUMBER}]"}' \
+                  ${webhookUrl}
+                """
+            }
+        }
+
+        failure {
+            script {
+                def webhookUrl = credentials('slack-webhook')
+                sh """
+                  curl -X POST -H 'Content-type: application/json' \
+                  --data '{"text":"❌ Build FAILED: Job ${env.JOB_NAME} [#${env.BUILD_NUMBER}]"}' \
+                  ${webhookUrl}
+                """
+            }
         }
     }
 }
